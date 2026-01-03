@@ -1,0 +1,79 @@
+<!-- fakebet.html – casa de apostas falsa, tudo inline -->
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<title>FakeBet – painel</title>
+<style>
+  body{background:#000;color:#0f0;font-family:monospace;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+  #box{border:1px solid #0f0;padding:2rem;background:#111;width:320px}
+  input,button{width:100%;margin:.5rem 0;padding:.6rem}
+  button{background:#0f0;color:#000;border:0;cursor:pointer}
+  #pixChave{font-size:.8rem;word-break:break-all}
+</style>
+
+<div id="box">
+  <h2>FakeBet</h2>
+
+  <div id="loginDiv">
+    <input id="user" placeholder="Usuário">
+    <input id="pass" type="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+    <button onclick="registrar()">Criar conta</button>
+  </div>
+
+  <div id="dashDiv" style="display:none">
+    <p>Olá <b id="nomeUser"></b></p>
+    <p>Saldo: <b id="saldoUser">0,00</b> BRL</p>
+    <button onclick="telaDeposito()">Depositar</button>
+    <button onclick="alert('Saque temporariamente indisponível')">Sacar</button>
+    <button onclick="logout()">Sair</button>
+  </div>
+
+  <div id="depDiv" style="display:none">
+    <p>Envie qualquer valor para a chave:</p>
+    <p id="pixChave">41f9c8d0-3f3a-4b0e-9c1a-7e8f2a1b3c4d</p>
+    <input id="valorDep" type="number" placeholder="Valor" step="0.01">
+    <button onclick="depositar()">Confirmar depósito</button>
+    <button onclick="telaDash()">Voltar</button>
+  </div>
+</div>
+
+<script>
+/* ---------- armazenamento local (fake DB) ---------- */
+const DB_KEY='fbusers';
+let userAtual=null;
+function loadUsers(){return JSON.parse(localStorage.getItem(DB_KEY)||'{}')}
+function saveUsers(u){localStorage.setItem(DB_KEY,JSON.stringify(u))}
+
+/* ---------- util ---------- */
+function $(id){return document.getElementById(id)}
+function mostrar(a){['loginDiv','dashDiv','depDiv'].forEach(d=>$(d).style.display='none');$(a).style.display='block'}
+
+/* ---------- login / reg ---------- */
+function login(){
+  const u=$('user').value,p=$('pass').value,db=loadUsers();
+  if(!db[u]||db[u].pass!==p)return alert('Login inválido');
+  userAtual=u;mostrar('dashDiv');$('nomeUser').innerText=u;$('saldoUser').innerText=db[u].saldo.toFixed(2);
+}
+function registrar(){
+  const u=prompt('Novo usuário:'),p=prompt('Senha:'),k=prompt('Chave PIX (só para constar):');
+  if(!u||!p)return;
+  const db=loadUsers();if(db[u])return alert('Usuário já existe');
+  db[u]={pass:p,pix:k,saldo:0};saveUsers(db);alert('Conta criada – faça login');
+}
+function logout(){userAtual=null;mostrar('loginDiv')}
+
+/* ---------- dashboard ---------- */
+function telaDeposito(){mostrar('depDiv')}
+function telaDash(){mostrar('dashDiv')}
+
+/* ---------- depósito fake ---------- */
+function depositar(){
+  const v=parseFloat($('valorDep').value);if(!v>0)return alert('Valor inválido');
+  const db=loadUsers();db[userAtual].saldo+=v;saveUsers(db);
+  $('saldoUser').innerText=db[userAtual].saldo.toFixed(2);alert('Depósito confirmado!');telaDash();
+}
+
+/* ---------- inicial ---------- */
+mostrar('loginDiv');
+</script>
